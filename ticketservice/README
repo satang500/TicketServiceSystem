@@ -1,0 +1,140 @@
+************************************************************************************
+***************               Structure of Project ticketservice      **************  
+************************************************************************************
+- This is a stand alone application using maven, Java, Apache commons 
+  with sts3.7.3 IDE ( no Spring framework, no disk-based DB ).
+- The project is composed of main, service, repository and model layers 
+  ( which is similar with controller, service, repository and DB in MVC ).
+- Data Structure is used to create and manage the ticket system 
+  in TicketSystem class ( instead of database ).
+
+************************************************************************************
+***************              Config and Log files location           *************** 
+************************************************************************************
+- config file location: src/main/resource/config.properties
+
+- logfile location is defined in src/main/resource/logback.xml in eclipse (or sts ) IDE 
+  <property name="DEV_HOME" value="C:/logs" />   
+
+  The location of log file is C:/logs in this example and you can change it as necessary.
+
+************************************************************************************
+****************   How to execute application and unit testing      ****************
+************************************************************************************
+Suppose you're current directory is ticketservice home where pom.xml file is located.
+
+i.e., if you type ls command you'll see the following: 
+META-INF  README     org       pom.xml   src       target
+
+------------------------------------------------------------------------------------
+-------------------------        How to execute application     -------------------- 
+------------------------------------------------------------------------------------
+1. Go to target directory and you'll see jar file and execute following command
+
+> java -cp ticketservice-1.0.0-SNAPSHOT-jar-with-dependencies.jar  com.walmart.ticketservice.App 
+
+2. You see the Main Menu as follows: 
+
+**********************************************************************************
+******************************      Main Menu       ******************************
+**********************************************************************************
+1. Find Number of Available Seats.
+2. Find and Hold Available Seats
+3. Reserve and Commit Held Seats
+**********************************************************************************
+INPUT> Choose a number from 1 ~ 3 and Hit Enter [-2 to Quit]: 3
+
+3. Choose a submenu number from 1 ~ 3 [or -2 to quit] 
+
+3.1. Suppose you choose 1. 
+     You see the following message and then type level number between 0 and 3 in this example.
+     ( ex: 2 is entered in this example ) 
+     
+     Then you'll see the available seat numbers 1500 in this level  
+     ( rows = 100 and seats per row = 15 in level 2 in config.properties file 
+       so the number of available seats is 100*15 = 1500 )
+
+INPUT> Type Level Number between 0 ~ 3 and Hit Enter [Type -1 to Main/-2 to Quit]: 2
+OUTPUT> availableSeats = 1500
+
+3.2 Suppose you choose 2.
+    You see the following 4 messages in sequence and type inputs 
+    ( ex: 10, 1, 3, and etest@gmail.com are entered in this example )
+    
+    Then you'll see the Seat Hold Id for returned output.
+
+INPUT> Type number of seats you want to hold and hit return [Type -1 to Main/-2 to Quit]: 10
+INPUT> Type Min level between 0 ~ 3 and hit return: 1
+INPUT> Type Max Level between 0 ~ 3 and hit return: 3
+INPUT> Type Customer Email Address: etest@gmail.com
+OUTPUT> Seat Hold Id: a3e5d012-4ea0-4cd5-8595-b23c7fd37952
+
+3.3 Suppose you choose 3.
+    Suppose you performed two seat hold in submenu 2.
+
+    You'll see the following 2 Seat Hold IDs.
+
+    If you entered 06619816-c6a2-4cc4-87fb-038d4bd31e5d and hlee@yahoo.com, 
+    you'll see the returned Reservation Confirm code a0576d9a-6a0a-420a-a6a4-f198a1b5fa70
+    
+--------------------------------------------------------------------------------------
+------------------- Seat Hold ID List ( Choose one of them ) -------------------------
+06619816-c6a2-4cc4-87fb-038d4bd31e5d
+a3e5d012-4ea0-4cd5-8595-b23c7fd37952
+
+--------------------------------------------------------------------------------------
+
+INPUT> Choose One Seat Hold ID from Above and Hit Return [Type -1 to Main/-2 to Quit]: 06619816-c6a2-4cc4-87fb-038d4bd31e5d
+INPUT> Type Customer Email Address: hlee@yahoo.com
+OUTPUT> Reservation Confirmation Code: a0576d9a-6a0a-420a-a6a4-f198a1b5fa70
+
+NOTE1:
+Option 1) Currently hold seat id expiration is 300 seconds ( 5 min. ),
+While you're testing menu3 you won't see the reduced number of Seat Hold IDs in the List 
+since I suppose you will test this application within 5 min.
+
+Option 2) Therefore if you want to see the effect of expiration of Seat Hold ID List 
+while you're executing application, 
+you can set up 1 sec ( hold.expire.sec = 1 in src/main/resource/config.properties ).
+
+And then if you test menu2 three times in a row, and then test menu3.
+You won't see all three seat hold IDs since a couple of (or all) seat hold IDs are already expired. 
+
+Alternatively you can also test this effect in unit testing section below 
+while you leave hold.expire.sec = 300 as it is for executing the application
+
+NOTE2: 
+Suppose you test the application while you leave hold seat id expiration is 300 seconds.
+
+If you perform menu3 twice in a row for 
+SeatHoldId = 06619816-c6a2-4cc4-87fb-038d4bd31e5d and 
+SeatHoldId = a3e5d012-4ea0-4cd5-8595-b23c7fd37952
+
+Then if you perform menu3 again for SeatHoldId = 06619816-c6a2-4cc4-87fb-038d4bd31e5d, 
+then you'll see "This hold id might have been already reserved and committed OR Invalid Hold ID."
+output message since this seat hold id has been already reserved and committed.
+
+You'll see SeatHoldId in Seat Hold ID List even after you reserved and committed.
+I didn't implement the feature of removing the reserved Seat Hold ID from Seat Hold ID list 
+since we use expiration mechanism for held seats and I let it handle it
+( i.e., seat hold Id will be removed from Seat Hold ID List after expiration time expires ). 
+  
+---------------------------------------------------------------------------------------
+-------------------------              How to run jUnit test        -------------------
+---------------------------------------------------------------------------------------
+Go to the main directory where pom.xml file is located and 
+then copy and paste the following commands.
+
+> mvn -Dtest=TicketServiceImplTest test  
+> mvn -Dtest=TicketServiceImplTest2 test
+> mvn -Dtest=TicketServiceRepositoryImplTest test
+> mvn -Dtest=TicketServiceRepositoryImplTest2 test 
+> mvn -Dtest=TicketSystemTest test
+
+### IMPORTANT !!!
+Before you perform TicketSystemTest2 junit test, I STRONGLY RECOMMEND you set up 
+hold.expire.sec = 1    in src/main/resource/config.properties
+to finish this unit test quickly ( currently it is set up 300 seconds )
+( Otherwise, this TicketSystemTest2 will be finished after 300 seconds + 10000 miliseconds )
+
+> mvn -Dtest=TicketSystemTest2 test    						
